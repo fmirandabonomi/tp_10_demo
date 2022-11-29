@@ -1,0 +1,7 @@
+v 4
+file . "testbench.vhd" "af48964e9b1409f0716a3e66fffee5c5ff36a48d" "20221129130008.081":
+  entity receptor_remoto_tb at 1( 0) + 0 on 11;
+  architecture tb of receptor_remoto_tb at 8( 125) + 0 on 12;
+file . "design.vhd" "1185be09baa4d6be141e3bb91fdded8895e61a9e" "20221129130008.082":
+  entity receptor_remoto at 1( 0) + 0 on 13;
+  architecture solucion of receptor_remoto at 15( 406) + 0 on 14;
