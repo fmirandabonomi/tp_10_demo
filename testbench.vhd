@@ -18,7 +18,15 @@ architecture tb of receptor_remoto_tb is
             cmd        : out std_logic_vector (7 downto 0));
     end component;
     -- Declaraciones
-    constant T : time := 187.5 us;
+    -- Constantes
+    constant T_H         : time  := 187.5 us;
+    constant T_L         : time  := T_H;
+    constant T_PULSO     : time  := 562.5 us;
+    constant T_BURST     : time  := 16*T_PULSO;
+    constant T_INICIO    : time  := 8*T_PULSO;
+    constant T_UNO       : time  := 3*T_PULSO;
+    constant T_CERO      : time  := T_PULSO;
+    --- Señales
     signal rst_in        : std_logic; 
     signal infrarrojo_in : std_logic;
     signal hab_in        : std_logic;
@@ -39,15 +47,114 @@ begin
     reloj: process
     begin
         clk_in <= '0';
-        wait for T;
+        wait for T_L;
         clk_in <= '1';
-        wait for T;
+        wait for T_H;
     end process;
     estimulo_eval: process
         variable pass: boolean := true;
-        ----
+        --- Mensaje
+        constant MSG_ADDR : std_logic_vector (7 downto 0) := "00010000";
+        constant MSG_CMD  : std_logic_vector (7 downto 0) := "01011010";
     begin
-        ----
+        -- Reset
+        infrarrojo_in <= '1';
+        hab_in <= '1';
+        rst_in <= '1';
+        wait for 2 ms;
+        rst_in <= '0';
+        wait for 2.5 ms;
+        -- Prueba : Estado al reset
+        if valido_out /= '0' then
+            report   "Salida valido esperada '0' obtenida "
+                   & std_logic'image(valido_out)
+                   severity error;
+            pass := false;
+        end if;
+        if dir_out /= x"00" then
+            report   "Salida dir esperada 00000000 obtenida "
+                   & to_string(dir_out)
+                   severity error;
+            pass := false;
+        end if;
+        if cmd_out /= x"00" then
+            report   "Salida cmd esperada 00000000 obtenida "
+                   & to_string(cmd_out)
+                   severity error;
+            pass := false;
+        end if;
+        -- Mensaje
+            -- Inicio
+        infrarrojo_in <= '0';
+        wait for T_BURST;
+        infrarrojo_in <= '1';
+        wait for T_INICIO;
+            -- Datos
+        for i in 0 to 7 loop
+            infrarrojo_in <= '0';
+            wait for T_PULSO;
+            infrarrojo_in <= '1';
+            if MSG_ADDR(i) = '1' then
+                wait for T_UNO;
+            else
+                wait for T_CERO;
+            end if;
+        end loop;
+        for i in 0 to 7 loop
+            infrarrojo_in <= '0';
+            wait for T_PULSO;
+            infrarrojo_in <= '1';
+            if not MSG_ADDR(i) = '1' then
+                wait for T_UNO;
+            else
+                wait for T_CERO;
+            end if;
+        end loop;
+        for i in 0 to 7 loop
+            infrarrojo_in <= '0';
+            wait for T_PULSO;
+            infrarrojo_in <= '1';
+            if MSG_CMD(i) = '1' then
+                wait for T_UNO;
+            else
+                wait for T_CERO;
+            end if;
+        end loop;
+        for i in 0 to 7 loop
+            infrarrojo_in <= '0';
+            wait for T_PULSO;
+            infrarrojo_in <= '1';
+            if not MSG_CMD(i) = '1' then
+                wait for T_UNO;
+            else
+                wait for T_CERO;
+            end if;
+        end loop;
+            -- Fin
+        infrarrojo_in <= '0';
+        wait for T_PULSO;
+        infrarrojo_in <= '1';
+        wait for 4.5 ms;
+        -- Prueba : comando válido recibido
+        if valido_out /= '1' then
+            report   "Salida valido esperada '1' obtenida "
+                   & std_logic'image(valido_out)
+                   severity error;
+            pass := false;
+        end if;
+        if dir_out /= x"10" then
+            report   "Salida dir esperada 00010000 obtenida "
+                   & to_string(dir_out)
+                   severity error;
+            pass := false;
+        end if;
+        if cmd_out /= x"5A" then
+            report   "Salida cmd esperada 01011010 obtenida "
+                   & to_string(cmd_out)
+                   severity error;
+            pass := false;
+        end if;
+
         if pass then
             report "Receptor remoto [PASS]";
         else
