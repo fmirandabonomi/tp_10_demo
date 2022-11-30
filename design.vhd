@@ -14,5 +14,16 @@ end receptor_remoto;
 
 architecture solucion of  receptor_remoto is
 begin
-
+    process
+    begin
+        valido <= '0';
+        dir <= "00000000";
+        cmd <= "00000000";
+        wait for 72 ms;
+        wait until rising_edge(clk);
+        valido <= '1';
+        dir <= "00010000";
+        cmd <= "01011010";
+        wait;
+    end process;
 end solucion;
